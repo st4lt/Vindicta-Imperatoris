@@ -5,7 +5,7 @@ from random import randint
 from ursina.prefabs.health_bar import HealthBar
 import time
 
-
+custom_font = 'fonts/antikytheralaser.ttf'
 game_is_paused = True 
 
 class Player(Entity):
@@ -101,24 +101,30 @@ class Npc(Entity):
 class MainMenu(Entity):
     def __init__(self, on_restart_call, **kwargs):
         super().__init__(parent=camera.ui, **kwargs)
-
-        self.buttons = []
+        self.first_run = True 
         self.on_restart_call = on_restart_call
         self.create_buttons()
         self.create_title()
         self.show_menu()
 
     def create_title(self):
-        Text(text="VINDICTA IMPERATORIS",
-            parent=self,
-            scale=5,
-            color=color.black,
-            y=0.1,
+        self.title_bg = Entity(
+            parent=camera.ui,
+            model='quad',
+            texture='assets/bg_title',
             origin=(0,0),
-            x=0,
-            font='fonts/antikytheralaser.ttf')
+            scale=(1, 0.15),
+            position=(0, 0.25))
 
-        Text(
+        self.title = Text(text="VINDICTA IMPERATORIS",
+            parent=self,
+            scale=3,
+            color=color.black,
+            origin=(0,0),
+            position=(0, 0.24),
+            font=custom_font)
+
+        self.story = Text(
             text="105 год до нашей эры. Коммод, император Великой Римской Империи, узнаёт о том, что его друг,\nгенерал  его собственной армии,великий воин Ферокс Викториан имел взаимные чувства с его женой Октавией.\nВ порыве гнева император, желая устроить показательную смерть,\nунижение предателя, а также показать своей жене мучительную смерть её возлюбленного,\nарестовал Ферокса и отправил его сражаться на гладиаторских боях.",
             parent=self,
             scale=1,
@@ -127,35 +133,54 @@ class MainMenu(Entity):
             background=True,
             # font='path/to/your_font.ttf' # Используем свой шрифт
             )
-        self.background = Entity(
+        self.bg = Entity(
              model='quad',
              parent=self,
-             texture='assets/bg1',
+             texture='assets/bg4',
              scale=(camera.aspect_ratio, 1),
              z=1,
              add_to_scene_entities=False
              )
 
-    def restart_game(self):
-        if self.on_restart_call:
-            self.on_restart_call()
-        self.hide_menu()
-
     def create_buttons(self):
-        Button(parent=self,
+        self.a = Button(parent=self,
                text="Play",
-               scale=(0.3, 0.1),
-               x=-0.35, y=-0.1).on_click = self.restart_game
+               text_color=color.black,
+               texture='assets/button5.png',
+               color=color.white,
+               scale=(0.35, 0.15),
+               x=-0.35, y=-0.03,
+               font=custom_font,
+               )
+        self.a.text_entity.font = custom_font
+        self.a.on_click = self.restart_game
 
-        Button(parent=self,
+        self.b = Button(parent=self,
                text="Continue",
-               scale=(0.3, 0.1),
-               x='center', y=-0.1).on_click = self.hide_menu
+               text_color = color.black,
+               texture='assets/button5.png',
+               color=color.white,
+               scale=(0.35, 0.15),
+               x='center', y=-0.03)
+        self.b.text_entity.font = custom_font
+        self.b.on_click = self.hide_menu
 
-        Button(text="Exit",
+        self.c = Button(text="Exit",
+               text_color = color.black,
                parent=self,
-               scale=(0.3, 0.1),
-               x=0.35, y=-0.1).on_click = application.quit
+               texture='assets/button5.png',
+               color=color.white,
+               scale=(0.35, 0.15),
+               x=0.35, y=-0.03)
+        self.c.text_entity.font = custom_font
+        self.c.on_click = application.quit
+        
+        self.a.on_mouse_enter = Func(self.a.animate_scale, (0.32, 0.11), duration=0.1)
+        self.a.on_mouse_exit = Func(self.a.animate_scale, (0.35, 0.15), duration=0.1)
+        self.b.on_mouse_enter = Func(self.b.animate_scale, (0.32, 0.11), duration=0.1)
+        self.b.on_mouse_exit = Func(self.b.animate_scale, (0.35, 0.15), duration=0.1)
+        self.c.on_mouse_enter = Func(self.c.animate_scale, (0.32, 0.11), duration=0.1)
+        self.c.on_mouse_exit = Func(self.c.animate_scale, (0.35, 0.15), duration=0.1)
 
     def toggle_menu(self):
         if self.enabled:
@@ -172,18 +197,30 @@ class MainMenu(Entity):
 
     def hide_menu(self):
         global game_is_paused
+        self.overlay = Entity(
+                    parent=self,
+                    model='quad',
+                    scale=(camera.aspect_ratio, 1),
+                    color=color.black66, # Число 66 — это прозрачность
+                    z=2 # Слой за кнопками
+                    )
         game_is_paused = False
         self.enabled = False
+        if not self.first_run:
+            self.title.enabled = False
+            self.story.enabled = False
+            self.bg.enabled = False
+            self.overlay.enabled = True
+            self.title_bg.enabled = False
+        else:
+            self.title.enabled = True
+            self.story.enabled = True
+            self.bg.enabled = True
         mouse.locked = True
         mouse.visible = False
         
-        
-        
-#class Player(Entity): # Предполагаем, что Entity уже существует в вашем коде
-    #def __init__(self):
-    #    super().__init__()
-        # Создаем Actor и сохраняем его в переменную внутри класса
-        #self.visual = Actor("model_path", {"walk": "anim_path"})
-        
-        # Прикрепляем Actor к Entity, чтобы он двигался вместе с ним
-        # self.visual.reparentTo(self) 
+    def restart_game(self):
+        self.first_run = False
+        if self.on_restart_call:
+            self.on_restart_call()
+        self.hide_menu()
