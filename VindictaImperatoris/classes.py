@@ -109,12 +109,13 @@ class MainMenu(Entity):
 
     def create_title(self):
         self.title_bg = Entity(
-            parent=camera.ui,
+            parent=self,
             model='quad',
-            texture='assets/bg_title',
+            texture='assets/bg_title.png',
             origin=(0,0),
             scale=(1, 0.15),
-            position=(0, 0.25))
+            position=(0, 0.25),
+            )
 
         self.title = Text(text="VINDICTA IMPERATORIS",
             parent=self,
@@ -122,7 +123,28 @@ class MainMenu(Entity):
             color=color.black,
             origin=(0,0),
             position=(0, 0.24),
-            font=custom_font)
+            font=custom_font,
+            )
+        
+        self.title_bg_pause = Entity(
+            parent=self,
+            model='quad',
+            texture='assets/bg_title.png',
+            origin=(0,0),
+            scale=(1, 0.15),
+            position=(0, 0.25), z=1,
+            enabled=False,
+            )
+
+        self.title_pause = Text(text="PAUSE",
+            parent=self,
+            scale=3,
+            color=color.black,
+            origin=(0,0),
+            position=(0, 0.24),
+            font=custom_font,
+            enabled=False,
+            )
 
         self.story = Text(
             text="105 год до нашей эры. Коммод, император Великой Римской Империи, узнаёт о том, что его друг,\nгенерал  его собственной армии,великий воин Ферокс Викториан имел взаимные чувства с его женой Октавией.\nВ порыве гнева император, желая устроить показательную смерть,\nунижение предателя, а также показать своей жене мучительную смерть её возлюбленного,\nарестовал Ферокса и отправил его сражаться на гладиаторских боях.",
@@ -161,7 +183,7 @@ class MainMenu(Entity):
                texture='assets/button5.png',
                color=color.white,
                scale=(0.35, 0.15),
-               x='center', y=-0.03)
+               y=-0.03)
         self.b.text_entity.font = custom_font
         self.b.on_click = self.hide_menu
 
@@ -201,24 +223,29 @@ class MainMenu(Entity):
                     parent=self,
                     model='quad',
                     scale=(camera.aspect_ratio, 1),
-                    color=color.black66, # Число 66 — это прозрачность
-                    z=2 # Слой за кнопками
+                    color=color.black66,
+                    z=2
                     )
         game_is_paused = False
         self.enabled = False
-        if not self.first_run:
-            self.title.enabled = False
-            self.story.enabled = False
-            self.bg.enabled = False
-            self.overlay.enabled = True
-            self.title_bg.enabled = False
-        else:
+        if self.first_run: ##меню запуска
+            self.b.x = 'center'
             self.title.enabled = True
+            self.title_bg.enabled = True
             self.story.enabled = True
             self.bg.enabled = True
-        mouse.locked = True
-        mouse.visible = False
-        
+            self.title_pause.enabled = False
+            self.title_bg_pause.enabled = False
+            
+        else: ##меню паузы
+            self.b.x = -0.35
+            self.title.enabled = False
+            self.title_bg.enabled = False
+            self.story.enabled = False
+            self.bg.enabled = False
+            self.title_pause.enabled = True
+            self.title_bg_pause.enabled = True
+            self.a.enabled = False
     def restart_game(self):
         self.first_run = False
         if self.on_restart_call:
