@@ -1,9 +1,10 @@
+import random
+import time
 from ursina import *
+from random import randint
 from direct.actor.Actor import Actor
 from ursina.shaders import basic_lighting_shader, unlit_shader
-from random import randint
 from ursina.prefabs.health_bar import HealthBar
-import time
 
 custom_font = 'fonts/antikytheralaser.ttf'
 game_is_paused = True 
@@ -12,11 +13,12 @@ class Player(Entity):
     def __init__(self, **kwargs):
         super().__init__(collider='box', speed=35, color=color.white,
                          jump_height=0.5, texture='white_cube', position=(0, 0.2, 0), hp_player=100, shader=basic_lighting_shader, **kwargs)
-        self.visual =self.visual = loader.loadModel("assets/humen_6.glb")
+        self.visual = loader.loadModel("assets/humen_6.glb")
         self.visual.reparentTo(self) 
-        self.mouse_sensitivity = 50
+        self.mouse_sensitivity = 30
         camera.reparent_to(self)
         self.on_ground = False
+        self.is_blocking = False
 
 
         self.default_cam_pos = Vec3(2, 12, -10)
@@ -41,37 +43,45 @@ class Player(Entity):
                    origin = (-0.5, 0.5), 
                    name ='health_bar'
                    )
+    
+
 
     def input(self, key):
         if key == 'scroll up':
             camera.z -= 1
         if key == 'scroll down':
             camera.z += 1
+        if key == 'right mouse down':
+            self.is_blocking = True
+        if key == 'right mouse up':
+            self.is_blocking = False
 
     def update(self):
         self.phb.enabled = not game_is_paused
         if game_is_paused:
             return
+        self.rotation_y += mouse.velocity.x * self.mouse_sensitivity
+        camera.rotation_x -= mouse.velocity.y * self.mouse_sensitivity
+        camera.rotation_x = clamp(camera.rotation_x, -89, 89) 
         direction = Vec3(self.forward * (held_keys['w'] - held_keys['s']) +
                      self.right * (held_keys['d'] - held_keys['a'])).normalized()
         self.position += direction * self.speed * time.dt
-        self.rotation_y += mouse.velocity.x * self.mouse_sensitivity
-        camera.rotation_x -= mouse.velocity.y * self.mouse_sensitivity
-        camera.rotation_x = clamp(camera.rotation_x, -40, 40)
 
 
 class Npc(Entity):
-    def __init__(self, target, speed=15, **kwargs):
+    def __init__(self, player_instance, speed=15, **kwargs):
         super().__init__(model='humen_6.glb', collider='box',
                          color=color.gray, texture='white_cube', hp_npc=100, shader=basic_lighting_shader, **kwargs)
-        self.target = target
-        self.speed = 0
+        self.player = player_instance 
         self.base_speed = speed
-        self.can_move = False
+        self.speed = 0
+        self.can_move = True
         self.velocity_y = 0
         self.gravity = 0.8
         self.can_attack = True
         invoke(self.enable_movement, delay=2)
+        self.npc = None
+        self.can_attack = True
         
         self.nhb = HealthBar(
                    value = 100,
@@ -87,16 +97,42 @@ class Npc(Entity):
 
     def enable_movement(self):
         self.speed = self.base_speed
+    
+    def account_npc_hp(self, damage): ##расчет хп нпс
+        self.hp_npc -= damage
+        self.nhb.value = self.hp_npc        
+        if self.hp_npc <= 0:
+            new_x = random.uniform(-20, 20)
+            new_z = random.uniform(15, 30)
+            Npc(player_instance=self.player, speed=self.base_speed, position=(new_x, 0.5, new_z))
+            destroy(self)
+    
+    def reset_attack(self): ##возможность у нпс атаковать
+            self.can_attack = True
 
     def update(self):
-        if game_is_paused or not self.target:
+        global game_is_paused
+        if game_is_paused or not self.player:
             return
-        self.look_at(self.target.position)
-        distance = distance_xz(self.position, self.target.position)
-        follow_distance = 3
-        if distance > follow_distance:
-            self.position += self.forward * self.speed * time.dt
 
+        self.look_at(self.player.position)
+        self.rotation_x = 0
+
+        distance = distance_xz(self.position, self.player.position)
+        if distance > 3:
+            self.position += self.forward * self.speed * time.dt
+        if self.can_attack and self.intersects(self.player).hit:
+            self.attack_logic()
+
+    def attack_logic(self):
+        self.can_attack = False
+        if self.player.is_blocking:
+            damage = 0
+        else:
+            damage = randint(7, 15)
+            self.player.hp_player -= damage
+            self.player.phb.value -= damage
+        invoke(self.reset_attack, delay=2)
 
 class MainMenu(Entity):
     def __init__(self, on_restart_call, **kwargs):
@@ -115,6 +151,7 @@ class MainMenu(Entity):
             origin=(0,0),
             scale=(1, 0.15),
             position=(0, 0.25),
+            color=color.white,
             )
 
         self.title = Text(text="VINDICTA IMPERATORIS",
@@ -124,26 +161,6 @@ class MainMenu(Entity):
             origin=(0,0),
             position=(0, 0.24),
             font=custom_font,
-            )
-        
-        self.title_bg_pause = Entity(
-            parent=self,
-            model='quad',
-            texture='assets/bg_title.png',
-            origin=(0,0),
-            scale=(1, 0.15),
-            position=(0, 0.25), z=1,
-            enabled=False,
-            )
-
-        self.title_pause = Text(text="PAUSE",
-            parent=self,
-            scale=3,
-            color=color.black,
-            origin=(0,0),
-            position=(0, 0.24),
-            font=custom_font,
-            enabled=False,
             )
 
         self.story = Text(
@@ -163,6 +180,14 @@ class MainMenu(Entity):
              z=1,
              add_to_scene_entities=False
              )
+        self.overlay = Entity(
+                    parent=self,
+                    model='quad',
+                    scale=(camera.aspect_ratio, 1),
+                    color=color.black66,
+                    z=2,
+                    enabled = False,
+                    )
 
     def create_buttons(self):
         self.a = Button(parent=self,
@@ -210,44 +235,62 @@ class MainMenu(Entity):
         else:
             self.show_menu()
 
+    def restart_game(self):
+        if self.on_restart_call:
+            self.on_restart_call()
+        self.first_run = False
+        self.enabled = False
+        self.bg.enabled = False
+        self.story.enabled = False
+        self.title.text = "VINDICTA IMPERATORIS"
+        self.title.color = color.black
+        self.title.scale = 3
+        game_is_paused = False
+        mouse.locked = True
+        mouse.visible = False
+
     def show_menu(self):
         global game_is_paused
         game_is_paused = True
-        self.enable()
+        self.enabled = True
+        self.bg.enabled = True
+        if not self.first_run:                  ## ПАУЗА
+            self.b.x = -0.35
+            self.overlay.enabled = True
+            self.bg.enabled = False
+            self.title.text = "PAUSE"
+            self.title.scale = 3
+            self.story.enabled = False
+            self.a.enabled = False
+            self.b.enabled = True
+        else:                                   ## ЗАПУСК
+            self.overlay.enabled = False
+            self.bg.enabled = True
+            self.story.enabled = True
+            self.a.enabled = True
+            self.b.enabled = False
         mouse.locked = False
         mouse.visible = True
 
     def hide_menu(self):
         global game_is_paused
-        self.overlay = Entity(
-                    parent=self,
-                    model='quad',
-                    scale=(camera.aspect_ratio, 1),
-                    color=color.black66,
-                    z=2
-                    )
         game_is_paused = False
         self.enabled = False
-        if self.first_run: ##меню запуска
-            self.b.x = 'center'
-            self.title.enabled = True
-            self.title_bg.enabled = True
-            self.story.enabled = True
-            self.bg.enabled = True
-            self.title_pause.enabled = False
-            self.title_bg_pause.enabled = False
-            
-        else: ##меню паузы
-            self.b.x = -0.35
-            self.title.enabled = False
-            self.title_bg.enabled = False
-            self.story.enabled = False
-            self.bg.enabled = False
-            self.title_pause.enabled = True
-            self.title_bg_pause.enabled = True
-            self.a.enabled = False
-    def restart_game(self):
+        self.bg.enabled = False
+        self.overlay.enabled = False
         self.first_run = False
-        if self.on_restart_call:
-            self.on_restart_call()
-        self.hide_menu()
+
+    def finish_game(self):
+        global game_is_paused
+        self.a.x = -0.35
+        self.a.enabled = True
+        game_is_paused = True
+        self.enabled = True
+        self.overlay.enabled = True
+        self.bg.enabled = False
+        self.title.text = "GAME OVER"
+        self.title.enabled = True
+        self.story.enabled = False
+        self.b.enabled = False
+        mouse.locked = False
+
