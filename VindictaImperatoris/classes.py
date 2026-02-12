@@ -196,7 +196,7 @@ class MainMenu(Entity):
                texture='assets/button5.png',
                color=color.white,
                scale=(0.35, 0.15),
-               x=-0.35, y=-0.03,
+               x = -0.2, y=-0.03,
                font=custom_font,
                )
         self.a.text_entity.font = custom_font
@@ -218,7 +218,7 @@ class MainMenu(Entity):
                texture='assets/button5.png',
                color=color.white,
                scale=(0.35, 0.15),
-               x=0.35, y=-0.03)
+               x=0.20, y=-0.03)
         self.c.text_entity.font = custom_font
         self.c.on_click = application.quit
         
@@ -255,7 +255,7 @@ class MainMenu(Entity):
         self.enabled = True
         self.bg.enabled = True
         if not self.first_run:                  ## ПАУЗА
-            self.b.x = -0.35
+            self.b.x = -0.2
             self.overlay.enabled = True
             self.bg.enabled = False
             self.title.text = "PAUSE"
@@ -282,7 +282,7 @@ class MainMenu(Entity):
 
     def finish_game(self):
         global game_is_paused
-        self.a.x = -0.35
+        self.a.x = -0.2
         self.a.enabled = True
         game_is_paused = True
         self.enabled = True
