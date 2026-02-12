@@ -65,12 +65,5 @@ The game is inspired by the history of the Roman Empire in 105 BC and tells the 
     </tr>
   </tbody>
 </table>
-<h2>🎯 Plans (To-Do List)</h2>
-<ul>
-  <li>Add animations for the player and NPCs.</li>
-  <li>Add sound effects and background music.</li>
-  <li>Create a boss.</li>
-  <li>Create interesting gameplay</li>
-</ul>
 
 
