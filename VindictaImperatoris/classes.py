@@ -78,7 +78,6 @@ class Npc(Entity):
         self.can_move = True
         self.velocity_y = 0
         self.gravity = 0.8
-        self.can_attack = True
         invoke(self.enable_movement, delay=2)
         self.npc = None
         self.can_attack = True
@@ -114,9 +113,9 @@ class Npc(Entity):
         global game_is_paused
         if game_is_paused or not self.player:
             return
-
         self.look_at(self.player.position)
         self.rotation_x = 0
+        self.rotation_z = 0
 
         distance = distance_xz(self.position, self.player.position)
         if distance > 3:
