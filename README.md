@@ -7,6 +7,9 @@
 The game is inspired by the history of the Roman Empire in 105 BC and tells the story of General Ferox Victorian, sent to gladiator battles by order of Emperor Commodus.</h3>
 
 <p align="right">
+  <img src='https://github.com/user-attachments/assets/cfa2d2ea-fe02-40fd-b924-98e4f39cfde6'>
+</p>
+<p align="right">
   <img src='https://github.com/user-attachments/assets/531d9e3b-5d9b-4d3f-8abe-38c336cc4507'>
 </p>
 
