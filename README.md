@@ -1,72 +1,73 @@
-<h1 align='center'>⚔️ Vindicta Imperatoris ⚔️ </h1>
 
-<img width="190" height="117" alt="images" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" /> &nbsp; <img width="190" height="117" alt="images" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" /> &nbsp; <img width="190" height="117" alt="images" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" /> &nbsp; <img width="190" height="117" alt="images" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" /> &nbsp;
+<div align="center">
+  <h1>⚔️ Vindicta Imperatoris ⚔️</h1>
+  <h3>🎮 3D Gladiator Arena | Ursina Engine</h3>
+</div>
 
-<h2>📖 Project Description [WIP] </h2>
-<h3>Individual final project for the 9-11th grade. This is a 3D game in the genre of gladiator fights, developed using Python and the Ursina engine. <br>
-The game is inspired by the history of the Roman Empire in 105 BC and tells the story of General Ferox Victorian, sent to gladiator battles by order of Emperor Commodus.</h3>
+<br>
 
-<p align="right">
-  <img src='https://github.com/user-attachments/assets/cfa2d2ea-fe02-40fd-b924-98e4f39cfde6'>
-</p>
-<p align="right">
-  <img src='https://github.com/user-attachments/assets/531d9e3b-5d9b-4d3f-8abe-38c336cc4507'>
-</p>
+<div align="center">
+  <img width="190" height="117" alt="screenshot" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" />
+  <img width="190" height="117" alt="screenshot" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" />
+  <img width="190" height="117" alt="screenshot" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" />
+  <img width="190" height="117" alt="screenshot" src="https://github.com/user-attachments/assets/47ab94aa-e3da-4d53-aea2-3a8b8607d797" />
+</div>
 
-<h2>📂 Project Structure</h2>
-<table width="100%">
-  <tr>
-    <th align="left">File Name</th>
-    <th align="left">Description</th>
-  </tr>
-  <tr>
-    <td><code>ursina_game.py</code></td>
-    <td>The core script containing the main game loop and world logic.</td>
-  </tr>
-  <tr>
-    <td><code>classes.py</code></td>
-    <td>Custom class definitions for Player, Enemies, and objects.</td>
-  </tr>
-</table>
-<!-- Секция установки (Must have для школьного проекта) -->
-<h2>🚀 Installation & Launch</h2>
-<ol>
-  <li>Install <b>Python 3.10.x</b> (or newer).</li>
-  <li>Install the required engine:
-    <pre><code>pip install ursina==6.1.2</code></pre>
-  </li>
-  <li>Run the game:
-    <pre><code>python ursina_game.py</code></pre>
-  </li>
-</ol>
+<br>
 
+---
 
-<h2>🎮 Controls </h2>
-<table>
-  <thead>
-    <tr>
-      <th>Key</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><b>W, A, S, D</b></td>
-      <td>Сharacter movement</td>
-    </tr>
-    <tr>
-      <td><b> LMB </b></td>
-      <td>Deal damage</td>
-    </tr>
-    <tr>
-      <td><b>RMB</b></td>
-      <td>Shield activation</td>
-    </tr>
-    <tr>
-      <td><b>Mouse wheel</b></td>
-      <td>Scroll</td>
-    </tr>
-  </tbody>
-</table>
+<pre>
+<span style="color: #8be9fd"><strong>📖 Project Description [WIP]</strong>
 
+Individual final project for the 9-11th grade. This is a 3D game in the genre of gladiator fights, developed using Python and the Ursina engine.
 
+The game is inspired by the history of the Roman Empire in 105 BC and tells the story of General Ferox Victorian, sent to gladiator battles by order of Emperor Commodus.</span>
+</pre>
+
+<br>
+
+<div align="right">
+  <img src="https://github.com/user-attachments/assets/cfa2d2ea-fe02-40fd-b924-98e4f39cfde6" width="45%" />
+  <img src="https://github.com/user-attachments/assets/531d9e3b-5d9b-4d3f-8abe-38c336cc4507" width="45%" />
+</div>
+
+<br>
+
+---
+
+<pre>
+<span style="color: #8be9fd"><strong>📂 Project Structure</strong>
+
+<strong>ursina_game.py</strong>  →  Core script containing the main game loop and world logic
+<strong>classes.py</strong>       →  Custom class definitions for Player, Enemies, and objects</span>
+</pre>
+
+---
+
+<pre>
+<span style="color: #8be9fd"><strong>🚀 Installation & Launch</strong>
+
+1. Install <strong>Python 3.10.x</strong> (or newer)
+2. Install Ursina engine:
+   <code>pip install ursina==6.1.2</code>
+3. Run the game:
+   <code>python ursina_game.py</code></span>
+</pre>
+
+---
+
+<pre>
+<span style="color: #8be9fd"><strong>🎮 Controls</strong>
+
+<strong>W, A, S, D</strong>  →  Character movement
+<strong>LMB</strong>         →  Deal damage
+<strong>RMB</strong>         →  Shield activation
+<strong>Mouse wheel</strong> →  Scroll</span>
+</pre>
+
+---
+
+<div align="center">
+  <sub>🐍 Built with Python & Ursina | © 2026 st4lt</sub>
+</div>
