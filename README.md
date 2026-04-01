@@ -27,7 +27,7 @@ The game is inspired by the history of the Roman Empire in 105 BC and tells the 
 
 <br>
 
-<div align="right">
+<div align="center">
   <img src="https://github.com/user-attachments/assets/cfa2d2ea-fe02-40fd-b924-98e4f39cfde6" width="45%" />
 </div>
 
