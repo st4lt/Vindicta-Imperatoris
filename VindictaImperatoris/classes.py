@@ -124,13 +124,29 @@ class Npc(Entity):
             self.attack_logic()
 
     def attack_logic(self):
+        sfx = Audio('npc.mp3', volume=1, autoplay=True) 
         self.can_attack = False
         if self.player.is_blocking:
+            Audio(
+            'schit.mp3', 
+            loop=False,          
+            autoplay=True,       
+            auto_destroy=False   
+            )
             damage = 0
         else:
             damage = randint(7, 15)
             self.player.hp_player -= damage
             self.player.phb.value -= damage
+            Audio(sound_file_name='npc.mp3', 
+                    volume=1, 
+                    pitch=1, 
+                    balance=0, 
+                    loop=False, 
+                    loops=1, 
+                    autoplay=True, 
+                    auto_destroy=False, 
+                    group='sfx')
         invoke(self.reset_attack, delay=2)
 
 class MainMenu(Entity):
@@ -138,9 +154,17 @@ class MainMenu(Entity):
         super().__init__(parent=camera.ui, **kwargs)
         self.first_run = True 
         self.on_restart_call = on_restart_call
+        self.muse = Audio(
+            'menu.mp3', 
+            loop=True,          
+            autoplay=True,       
+            auto_destroy=False   
+        )
+
         self.create_buttons()
         self.create_title()
         self.show_menu()
+        
 
     def create_title(self):
         self.title_bg = Entity(
@@ -233,8 +257,18 @@ class MainMenu(Entity):
             self.hide_menu()
         else:
             self.show_menu()
+            Audio(sound_file_name='menu.mp3', 
+                        volume=1, 
+                        pitch=1, 
+                        balance=0, 
+                        loop=False, 
+                        loops=1, 
+                        autoplay=True, 
+                        auto_destroy=False, 
+                        group='sfx')
 
     def restart_game(self):
+        self.muse.stop()
         if self.on_restart_call:
             self.on_restart_call()
         self.first_run = False
@@ -250,6 +284,8 @@ class MainMenu(Entity):
 
     def show_menu(self):
         global game_is_paused
+        if not self.muse.playing:
+            self.muse.play()
         game_is_paused = True
         self.enabled = True
         self.bg.enabled = True
@@ -273,6 +309,7 @@ class MainMenu(Entity):
 
     def hide_menu(self):
         global game_is_paused
+        self.muse.fade_out(duration=0.5)
         game_is_paused = False
         self.enabled = False
         self.bg.enabled = False

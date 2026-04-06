@@ -48,6 +48,17 @@ def input(key): ##отзывчивость кнопок
                 if player.intersects(e).hit:
                     damage = randint(15, 25)
                     e.account_npc_hp(damage)
+                Audio(sound_file_name='hero.mp3', 
+                        volume=1, 
+                        pitch=1, 
+                        balance=0, 
+                        loop=False, 
+                        loops=1, 
+                        autoplay=True, 
+                        auto_destroy=False, 
+                        group='sfx'
+    )
+
         
 def update():
     if cl.game_is_paused:
