@@ -13,7 +13,7 @@ class Player(Entity):
     def __init__(self, **kwargs):
         super().__init__(collider='box', speed=35, color=color.white,
                          jump_height=0.5, texture='white_cube', position=(0, 0.2, 0), hp_player=100, shader=basic_lighting_shader, **kwargs)
-        self.visual = loader.loadModel("assets/humen_6.glb")
+        self.visual = loader.loadModel("assets/humen_7.glb")
         self.visual.reparentTo(self) 
         self.mouse_sensitivity = 30
         camera.reparent_to(self)
@@ -33,24 +33,29 @@ class Player(Entity):
         camera.fov = 120
         
         self.phb = HealthBar(
-                   value = 100,
-                   roundness = 0.25, 
-                   highlight_color = color.black66, 
-                   show_text = True, 
-                   show_lines = False, 
-                   text_size = 0.7, 
-                   scale = (0.5, 0.025), 
-                   origin = (-0.5, 0.5), 
-                   name ='health_bar'
-                   )
-    
+            value=100,
+            roundness=0.25, 
+            parent=camera.ui, 
+            position=(-0.8, 0.45),
+            show_text=True, 
+            scale=(0.5, 0.025),
+            name='health_bar'
+            )
 
+        self.block_bar = HealthBar(
+            value=100,
+            roundness=0.25,
+            bar_color=color.yellow,
+            show_text = False,
+            parent=camera.ui,
+            animation_duration=0,
+            position=(-0.8, 0.40),  
+            scale=(0.5, 0.025),
+            name='blockbar',
+            )
+        
 
     def input(self, key):
-        if key == 'scroll up':
-            camera.z -= 1
-        if key == 'scroll down':
-            camera.z += 1
         if key == 'right mouse down':
             self.is_blocking = True
         if key == 'right mouse up':
@@ -58,14 +63,22 @@ class Player(Entity):
 
     def update(self):
         self.phb.enabled = not game_is_paused
-        if game_is_paused:
-            return
-        self.rotation_y += mouse.velocity.x * self.mouse_sensitivity
-        camera.rotation_x -= mouse.velocity.y * self.mouse_sensitivity
-        camera.rotation_x = clamp(camera.rotation_x, -89, 89) 
-        direction = Vec3(self.forward * (held_keys['w'] - held_keys['s']) +
-                     self.right * (held_keys['d'] - held_keys['a'])).normalized()
-        self.position += direction * self.speed * time.dt
+        self.block_bar.enabled = not game_is_paused
+        if not game_is_paused:
+
+            if self.block_bar.value < 100 and not self.is_blocking:
+                self.block_bar.value += 20 * time.dt # Немного ускорим для комфорта
+            elif self.block_bar.value < 100:
+                self.block_bar.bar.color = color.gray      # Щит разряжен
+            else:
+                self.block_bar.bar.color = color.yellow    # Щит готов
+                
+            self.rotation_y += mouse.velocity.x * self.mouse_sensitivity
+            camera.rotation_x -= mouse.velocity.y * self.mouse_sensitivity
+            camera.rotation_x = clamp(camera.rotation_x, -89, 89) 
+            direction = Vec3(self.forward * (held_keys['w'] - held_keys['s']) +
+                         self.right * (held_keys['d'] - held_keys['a'])).normalized()
+            self.position += direction * self.speed * time.dt
 
 
 class Npc(Entity):
@@ -126,7 +139,7 @@ class Npc(Entity):
     def attack_logic(self):
         sfx = Audio('npc.mp3', volume=1, autoplay=True) 
         self.can_attack = False
-        if self.player.is_blocking:
+        if self.player.block_bar.value > 80 and self.player.is_blocking:
             Audio(
             'schit.mp3', 
             loop=False,          
@@ -134,6 +147,7 @@ class Npc(Entity):
             auto_destroy=False   
             )
             damage = 0
+            self.player.block_bar.value -= 100
         else:
             damage = randint(7, 15)
             self.player.hp_player -= damage
@@ -193,7 +207,6 @@ class MainMenu(Entity):
             y=-0.3,
             x=-0.7,
             background=True,
-            # font='path/to/your_font.ttf' # Используем свой шрифт
             )
         self.bg = Entity(
              model='quad',
@@ -329,4 +342,3 @@ class MainMenu(Entity):
         self.story.enabled = False
         self.b.enabled = False
         mouse.locked = False
-

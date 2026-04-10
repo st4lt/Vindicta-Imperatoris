@@ -1,7 +1,7 @@
 from ursina import *
-import classes as cl
+import classes_v4 as cl
 from random import randint
-import random
+from ursina.shaders import basic_lighting_shader, unlit_shader
 
 
 app = Ursina() ##создание окна
@@ -11,7 +11,7 @@ player = cl.Player()
 cl.game_is_paused = True 
 game_over = False
 if not game_over:   game_active = False
-colosseum = Entity(model='kolizey_5.glb', collider='box', position=(0, 0, 0))
+colosseum = Entity(model='9.glb', collider='box', position=(0, 0, 0), shader=unlit_shader)
 
 directional_light = DirectionalLight(parent=light_pivot, shadows=True)
 directional_light.rotation = (45, -45, 0)
