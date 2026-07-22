@@ -1,10 +1,10 @@
 from ursina import *
-import classes_v4 as cl
+import classes as cl
 from random import randint
 from ursina.shaders import basic_lighting_shader, unlit_shader
 
 
-app = Ursina() ##создание окна
+app = Ursina(development_mode=False)
 light_pivot = Entity()
 Sky()
 player = cl.Player()

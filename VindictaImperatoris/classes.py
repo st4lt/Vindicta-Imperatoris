@@ -6,19 +6,22 @@ from direct.actor.Actor import Actor
 from ursina.shaders import basic_lighting_shader, unlit_shader
 from ursina.prefabs.health_bar import HealthBar
 
-custom_font = 'fonts/antikytheralaser.ttf'
+CUSTOM_FONT = 'fonts/antikytheralaser.ttf'
 game_is_paused = True 
 
 class Player(Entity):
     def __init__(self, **kwargs):
         super().__init__(collider='box', speed=35, color=color.white,
                          jump_height=0.5, texture='white_cube', position=(0, 0.2, 0), hp_player=100, shader=basic_lighting_shader, **kwargs)
+        self.max_kill_count = 20
+        self.kill_count = 0
         self.visual = loader.loadModel("assets/humen_7.glb")
         self.visual.reparentTo(self) 
         self.mouse_sensitivity = 30
         camera.reparent_to(self)
         self.on_ground = False
         self.is_blocking = False
+        
 
 
         self.default_cam_pos = Vec3(2, 12, -10)
@@ -37,10 +40,34 @@ class Player(Entity):
             roundness=0.25, 
             parent=camera.ui, 
             position=(-0.8, 0.45),
-            show_text=True, 
-            scale=(0.5, 0.025),
+            show_text=False, 
+            scale=(0.35, 0.025),
             name='health_bar'
             )
+
+        self.hp = Entity(
+        parent=camera.ui, 
+        model='quad',
+        texture='assets/hp_v1.png',
+        origin=(0,0),
+        scale=(0.05, 0.05),
+        position=(-0.85, 0.45),
+        )
+
+        # self.npc_deaths = HealthBar(
+        #     value=self.kill_count,
+        #     roundness=0.25,
+        #     bar_color=color.black,
+        #     max_value=self.max_kill_count,
+        #     show_text = True,
+        #     parent=camera.ui,
+        #     animation_duration=0,
+        #     position=(-0.25, -0.43),
+        #     scale=(0.5, 0.025),
+        #     )
+        # self.npc_deaths.text_entity.text = f'{self.kill_count}/{self.max_kill_count}'
+
+        self.npc_text_deaths = Text(text=str(self.max_kill_count), color=color.black, position=(0.7, 0.45), scale=1.5)
 
         self.block_bar = HealthBar(
             value=100,
@@ -50,10 +77,20 @@ class Player(Entity):
             parent=camera.ui,
             animation_duration=0,
             position=(-0.8, 0.40),  
-            scale=(0.5, 0.025),
+            scale=(0.35, 0.025),
             name='blockbar',
             )
-        
+
+        self.block_img = Entity(
+        parent=camera.ui, 
+        model='quad',
+        texture='assets/shield_v2.png',
+        origin=(0,0),
+        scale=(0.05, 0.05),
+        position=(-0.85, 0.395),
+        #color=color.white,
+        )
+
 
     def input(self, key):
         if key == 'right mouse down':
@@ -64,8 +101,12 @@ class Player(Entity):
     def update(self):
         self.phb.enabled = not game_is_paused
         self.block_bar.enabled = not game_is_paused
-        if not game_is_paused:
+        self.block_img.enabled = not game_is_paused
+        self.hp.enabled = not game_is_paused
+        self.npc_text_deaths.enabled = not game_is_paused
+        
 
+        if not game_is_paused:
             if self.block_bar.value < 100 and not self.is_blocking:
                 self.block_bar.value += 20 * time.dt # Немного ускорим для комфорта
             elif self.block_bar.value < 100:
@@ -94,7 +135,7 @@ class Npc(Entity):
         invoke(self.enable_movement, delay=2)
         self.npc = None
         self.can_attack = True
-        
+
         self.nhb = HealthBar(
                    value = 100,
                    bar_color=color.red.tint(-0.2),
@@ -111,13 +152,18 @@ class Npc(Entity):
         self.speed = self.base_speed
     
     def account_npc_hp(self, damage): ##расчет хп нпс
+        self.count_death = 0
         self.hp_npc -= damage
-        self.nhb.value = self.hp_npc        
+        self.nhb.value = self.hp_npc
         if self.hp_npc <= 0:
+            self.player.kill_count += 1
+            self.player.max_kill_count -= 1
+            self.player.npc_text_deaths.text = str(self.player.max_kill_count)
             new_x = random.uniform(-20, 20)
             new_z = random.uniform(15, 30)
             Npc(player_instance=self.player, speed=self.base_speed, position=(new_x, 0.5, new_z))
             destroy(self)
+            
     
     def reset_attack(self): ##возможность у нпс атаковать
             self.can_attack = True
@@ -197,7 +243,7 @@ class MainMenu(Entity):
             color=color.black,
             origin=(0,0),
             position=(0, 0.24),
-            font=custom_font,
+            font=CUSTOM_FONT,
             )
 
         self.story = Text(
@@ -233,9 +279,9 @@ class MainMenu(Entity):
                color=color.white,
                scale=(0.35, 0.15),
                x = -0.2, y=-0.03,
-               font=custom_font,
+               font=CUSTOM_FONT,
                )
-        self.a.text_entity.font = custom_font
+        self.a.text_entity.font = CUSTOM_FONT
         self.a.on_click = self.restart_game
 
         self.b = Button(parent=self,
@@ -245,7 +291,7 @@ class MainMenu(Entity):
                color=color.white,
                scale=(0.35, 0.15),
                y=-0.03)
-        self.b.text_entity.font = custom_font
+        self.b.text_entity.font = CUSTOM_FONT
         self.b.on_click = self.hide_menu
 
         self.c = Button(text="Exit",
@@ -255,7 +301,7 @@ class MainMenu(Entity):
                color=color.white,
                scale=(0.35, 0.15),
                x=0.20, y=-0.03)
-        self.c.text_entity.font = custom_font
+        self.c.text_entity.font = CUSTOM_FONT
         self.c.on_click = application.quit
         
         self.a.on_mouse_enter = Func(self.a.animate_scale, (0.32, 0.11), duration=0.1)
