@@ -38,7 +38,7 @@ The game is inspired by the history of the Roman Empire in 105 BC and tells the 
 <pre>
 <span style="color: #8be9fd"><strong>📂 Project Structure</strong>
 
-<strong>ursina_game.py</strong>  →  Core script containing the main game loop and world logic
+<strong>main.py</strong>  →  Core script containing the main game loop and world logic
 <strong>classes.py</strong>       →  Custom class definitions for Player, Enemies, and objects</span>
 </pre>
 
