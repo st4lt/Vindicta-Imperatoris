@@ -51,7 +51,7 @@ The game is inspired by the history of the Roman Empire in 105 BC and tells the 
 2. Install Ursina engine:
    <code>pip install ursina==6.1.2</code>
 3. Run the game:
-   <code>python ursina_game.py</code></span>
+   <code>python main.py</code></span>
 </pre>
 
 ---
