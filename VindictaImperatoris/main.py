@@ -11,7 +11,8 @@ player = cl.Player()
 cl.game_is_paused = True 
 game_over = False
 if not game_over:   game_active = False
-colosseum = Entity(model='9.glb', collider='box', position=(0, 0, 0), shader=unlit_shader)
+colosseum = Entity(model='9.glb', position=(0, 0, 0), shader=unlit_shader)
+colosseum.collider = MeshCollider(colosseum)
 
 directional_light = DirectionalLight(parent=light_pivot, shadows=True)
 directional_light.rotation = (45, -45, 0)

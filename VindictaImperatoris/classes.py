@@ -9,10 +9,13 @@ from ursina.prefabs.health_bar import HealthBar
 CUSTOM_FONT = 'fonts/antikytheralaser.ttf'
 game_is_paused = True 
 
+'''path = C:\program1\GitVindictaImperatoris\Vindicta-Imperatoris\VindictaImperatoris'''
+
 class Player(Entity):
     def __init__(self, **kwargs):
         super().__init__(collider='box', speed=35, color=color.white,
                          jump_height=0.5, texture='white_cube', position=(0, 0.2, 0), hp_player=100, shader=basic_lighting_shader, **kwargs)
+        self.hp_player = 100
         self.max_kill_count = 20
         self.kill_count = 0
         self.visual = loader.loadModel("assets/humen_7.glb")
@@ -34,6 +37,14 @@ class Player(Entity):
         camera.position = self.default_cam_pos
         camera.rotation_x = self.default_cam_rot.x
         camera.fov = 120
+
+        self.dash_speed_multiplier = 3.0  # Во сколько раз увеличивается скорость при рывке
+        self.dash_duration = 0.15         # Длительность рывка в секундах
+        self.dash_cooldown = 1.0         # Перезарядка рывка (1 секунда)
+        
+        self.dash_timer = 0               # Сколько времени осталось до конца текущего рывка
+        self.dash_cooldown_timer = 0      # Таймер перезарядки
+        self.dash_direction = Vec3(0,0,0) # Направление, куда совершается рывок
         
         self.phb = HealthBar(
             value=100,
@@ -54,19 +65,6 @@ class Player(Entity):
         position=(-0.85, 0.45),
         )
 
-        # self.npc_deaths = HealthBar(
-        #     value=self.kill_count,
-        #     roundness=0.25,
-        #     bar_color=color.black,
-        #     max_value=self.max_kill_count,
-        #     show_text = True,
-        #     parent=camera.ui,
-        #     animation_duration=0,
-        #     position=(-0.25, -0.43),
-        #     scale=(0.5, 0.025),
-        #     )
-        # self.npc_deaths.text_entity.text = f'{self.kill_count}/{self.max_kill_count}'
-
         self.npc_text_deaths = Text(text=str(self.max_kill_count), color=color.black, position=(0.7, 0.45), scale=1.5)
 
         self.block_bar = HealthBar(
@@ -84,19 +82,49 @@ class Player(Entity):
         self.block_img = Entity(
         parent=camera.ui, 
         model='quad',
-        texture='assets/shield_v2.png',
+        texture='assets/shield_v3.png',
         origin=(0,0),
-        scale=(0.05, 0.05),
+        scale=(0.075, 0.05),
         position=(-0.85, 0.395),
-        #color=color.white,
         )
+
+    def heal(self, k=1):
+        formula = 100 * ( 1 + k * (1 - self.hp_player/100))
+        self.hp_player = min(round(self.hp_player + formula), 100)
+        self.phb.value = self.hp_player
 
 
     def input(self, key):
+        if key == 'h':
+            x = random.uniform(-50, 50)
+            z = random.uniform(-50, 50)
+            vial_heal = Entity(
+                    model='cube', 
+                    color=color.red,
+                    scale=(5, 5, 5),
+                    position=(x, 0, z), 
+                    shader=unlit_shader,
+                    name='vial', collider='box')
         if key == 'right mouse down':
             self.is_blocking = True
         if key == 'right mouse up':
             self.is_blocking = False
+        if key == 'left shift' and not game_is_paused:
+            # Проверяем, что рывок не на перезарядке и игрок нажимает клавиши движения
+            if self.dash_cooldown_timer <= 0:
+                # Получаем текущее направление ходьбы
+                move_dir = Vec3(self.forward * (held_keys['w'] - held_keys['s']) + self.right * (held_keys['d'] - held_keys['a']))
+                move_dir.y = 0
+                
+                # Если игрок просто стоит на месте, рывок идет вперед
+                if move_dir == Vec3(0,0,0):
+                    move_dir = self.forward
+                    move_dir.y = 0
+                    
+                self.dash_direction = move_dir.normalized()
+                self.dash_timer = self.dash_duration
+                self.dash_cooldown_timer = self.dash_cooldown
+                # Audio('dash.mp3', autoplay=True)
 
     def update(self):
         self.phb.enabled = not game_is_paused
@@ -105,21 +133,51 @@ class Player(Entity):
         self.hp.enabled = not game_is_paused
         self.npc_text_deaths.enabled = not game_is_paused
         
-
         if not game_is_paused:
             if self.block_bar.value < 100 and not self.is_blocking:
-                self.block_bar.value += 20 * time.dt # Немного ускорим для комфорта
+                self.block_bar.value += 20 * time.dt 
             elif self.block_bar.value < 100:
-                self.block_bar.bar.color = color.gray      # Щит разряжен
+                self.block_bar.bar.color = color.gray 
             else:
-                self.block_bar.bar.color = color.yellow    # Щит готов
+                self.block_bar.bar.color = color.yellow 
                 
             self.rotation_y += mouse.velocity.x * self.mouse_sensitivity
             camera.rotation_x -= mouse.velocity.y * self.mouse_sensitivity
-            camera.rotation_x = clamp(camera.rotation_x, -89, 89) 
-            direction = Vec3(self.forward * (held_keys['w'] - held_keys['s']) +
-                         self.right * (held_keys['d'] - held_keys['a'])).normalized()
-            self.position += direction * self.speed * time.dt
+            camera.rotation_x = clamp(camera.rotation_x, -89, 89)
+            
+            if self.dash_cooldown_timer > 0:
+                self.dash_cooldown_timer -= time.dt
+                
+            current_speed = self.speed
+            direction = Vec3(0,0,0)
+            
+            if self.dash_timer > 0:
+                self.dash_timer -= time.dt
+                direction = self.dash_direction
+                current_speed = self.speed * self.dash_speed_multiplier
+            else:
+                direction = Vec3(self.forward * (held_keys['w'] - held_keys['s']) + self.right * (held_keys['d'] - held_keys['a']))
+                direction.y = 0
+                if direction != Vec3(0,0,0):
+                    direction = direction.normalized()
+            
+            if direction != Vec3(0,0,0):
+                future_pos = self.position + (direction * current_speed * time.dt)
+                distance_from_center = math.sqrt(future_pos.x**2 + future_pos.z**2)
+                
+                if distance_from_center < 50:
+                    self.position = future_pos
+                else:
+                    self.position = future_pos.normalized() * 49.9
+                    self.dash_timer = 0
+            self.y = 0.2
+
+            for e in scene.entities:
+                if e.name == 'vial': 
+                    if self.intersects(e).hit:
+                        self.heal(k=1)
+                        destroy(e)
+
 
 
 class Npc(Entity):
@@ -172,15 +230,34 @@ class Npc(Entity):
         global game_is_paused
         if game_is_paused or not self.player:
             return
+            
         self.look_at(self.player.position)
         self.rotation_x = 0
         self.rotation_z = 0
-
+        
         distance = distance_xz(self.position, self.player.position)
+        
+        # Если бот далеко от игрока, он бежит к нему
         if distance > 3:
-            self.position += self.forward * self.speed * time.dt
-        if self.can_attack and self.intersects(self.player).hit:
+            npc_dir = (self.player.position - self.position)
+            npc_dir.y = 0
+            npc_dir = npc_dir.normalized()
+            
+            future_pos = self.position + (npc_dir * self.speed * time.dt)
+            
+            # --- ЖЕСТКАЯ СТЕНА ДЛЯ NPC ---
+            # Боты тоже не могут выйти за радиус арены
+            distance_from_center = math.sqrt(future_pos.x**2 + future_pos.z**2)
+            if distance_from_center < 50:
+                self.position = future_pos
+            else:
+                self.position = future_pos.normalized() * 49.9
+                    
+        # Атака по точной дистанции (гарантирует отсутствие лагов коллизий)
+        if self.can_attack and distance <= 3.2:
             self.attack_logic()
+
+
 
     def attack_logic(self):
         sfx = Audio('npc.mp3', volume=1, autoplay=True) 
