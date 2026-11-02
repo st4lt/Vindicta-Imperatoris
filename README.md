@@ -66,6 +66,12 @@ The game is inspired by the history of the Roman Empire in 105 BC and tells the 
 </pre>
 
 ---
+<hr>
+<p align="left">
+  <i><small><strong>🎨 Credits:</strong> Icons used in this project were sourced from <a href="https://www.flaticon.com/ru/free-icons/" title="рыцарь иконки">Рыцарь иконки от Magnific - Flaticon</a>, <a href="https://www.flaticon.com/ru/free-icons/" title="меч иконки">Меч иконки от Magnific - Flaticon</a> and open repositories. All rights belong to their respective owners.</i></small>
+</p>
+
+---
 
 <div align="center">
   <sub>🐍 Built with Python & Ursina | © 2026 st4lt</sub>
