@@ -11,7 +11,7 @@ player = cl.Player()
 cl.game_is_paused = True 
 game_over = False
 if not game_over:   game_active = False
-colosseum = Entity(model='9.glb', position=(0, 0, 0), shader=unlit_shader)
+colosseum = Entity(model='10.glb', position=(0, 0, 0), shader=unlit_shader)
 colosseum.collider = MeshCollider(colosseum)
 
 directional_light = DirectionalLight(parent=light_pivot, shadows=True)
@@ -30,8 +30,9 @@ def reset_world():
         player.phb.value = 100
         player.position = (0, 0.2, 0)
         player.rotation = (0, 0, 0)
-    for e in [e for e in scene.entities if isinstance(e, cl.Npc)]:
-        destroy(e)
+    for e in scene.entities:
+        if isinstance(e, cl.Npc):
+            destroy(e)
     new_x = random.uniform(-20, 20)
     new_z = random.uniform(15, 30)
     cl.Npc(player_instance=player, speed=15, position=(new_x, 0.5, new_z))
@@ -44,21 +45,18 @@ def input(key): ##отзывчивость кнопок
         else:
             menu.hide_menu()
     if not cl.game_is_paused and key == 'left mouse down':
-        for e in scene.entities:
-            if isinstance(e, cl.Npc):
-                if player.intersects(e).hit:
-                    damage = randint(15, 25)
-                    e.account_npc_hp(damage)
-                Audio(sound_file_name='hero.mp3', 
-                        volume=1, 
-                        pitch=1, 
-                        balance=0, 
-                        loop=False, 
-                        loops=1, 
-                        autoplay=True, 
-                        auto_destroy=False, 
-                        group='sfx'
-    )
+        hit_info = player.intersects()
+        if hit_info.hit and isinstance(hit_info.entity, cl.Npc):
+            damage = randint(15, 25)
+            hit_info.entity.account_npc_hp(damage)
+            Audio(sound_file_name='hero.mp3', 
+                    volume=1, 
+                    pitch=1, 
+                    balance=0, 
+                    loop=False, 
+                    autoplay=True, 
+                    auto_destroy=True, 
+                    group='sfx')
 
         
 def update():
