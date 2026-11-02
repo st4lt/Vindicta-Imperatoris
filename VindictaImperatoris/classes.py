@@ -18,25 +18,30 @@ class Player(Entity):
         self.hp_player = 100
         self.max_kill_count = 20
         self.kill_count = 0
-        self.visual = loader.loadModel("assets/humen_7.glb")
-        self.visual.reparentTo(self) 
+        self.visual = Entity(model="assets/humen_7.glb", parent=self)
+
         self.mouse_sensitivity = 30
-        camera.reparent_to(self)
         self.on_ground = False
         self.is_blocking = False
         
 
 
-        self.default_cam_pos = Vec3(2, 12, -10)
-        self.default_cam_rot = Vec3(20, 0, 0)
+        self.default_cam_pos = Vec3(5, 12, -13)
+        # self.default_cam_rot = Vec3(20, 0, 0)
 
         self.combat_cam_pos = Vec3(5, 5, -5)
         self.combat_cam_rot = Vec3(10, -90, 0)
         self.in_combat_view = False
+        self.camera_pivot = Entity(parent=self, y=2) 
+        camera.reparent_to(self.camera_pivot)
+        camera.position = (5, 12, -13)
+        camera.rotation = (15, 0, 0)
+        self.cam_rot_x = 15
+        self.cam_rot_y = 0
 
-        camera.position = self.default_cam_pos
-        camera.rotation_x = self.default_cam_rot.x
-        camera.fov = 120
+        # camera.position = self.default_cam_pos
+        # camera.rotation_x = self.default_cam_rot.x
+        camera.fov = 100
 
         self.dash_speed_multiplier = 3.0  # Во сколько раз увеличивается скорость при рывке
         self.dash_duration = 0.15         # Длительность рывка в секундах
@@ -89,7 +94,7 @@ class Player(Entity):
         )
 
     def heal(self, k=1):
-        formula = 100 * ( 1 + k * (1 - self.hp_player/100))
+        formula = 20 * ( 1 + k * (1 - self.hp_player/100))
         self.hp_player = min(round(self.hp_player + formula), 100)
         self.phb.value = self.hp_player
 
@@ -141,9 +146,22 @@ class Player(Entity):
             else:
                 self.block_bar.bar.color = color.yellow 
                 
-            self.rotation_y += mouse.velocity.x * self.mouse_sensitivity
-            camera.rotation_x -= mouse.velocity.y * self.mouse_sensitivity
-            camera.rotation_x = clamp(camera.rotation_x, -89, 89)
+            self.cam_rot_y += mouse.velocity.x * self.mouse_sensitivity * 10
+            self.cam_rot_x -= mouse.velocity.y * self.mouse_sensitivity * 10
+            self.cam_rot_x = clamp(self.cam_rot_x, -20, 40)
+            
+            self.camera_pivot.rotation_x = self.cam_rot_x
+            self.camera_pivot.rotation_y = self.cam_rot_y
+
+            
+            
+            cam_forward = camera.forward
+            cam_forward.y = 0
+            cam_forward = cam_forward.normalized()
+            
+            cam_right = camera.right
+            cam_right.y = 0
+            cam_right = cam_right.normalized()
             
             if self.dash_cooldown_timer > 0:
                 self.dash_cooldown_timer -= time.dt
@@ -156,11 +174,12 @@ class Player(Entity):
                 direction = self.dash_direction
                 current_speed = self.speed * self.dash_speed_multiplier
             else:
-                direction = Vec3(self.forward * (held_keys['w'] - held_keys['s']) + self.right * (held_keys['d'] - held_keys['a']))
-                direction.y = 0
+                # Персонаж идет туда, куда направлена камера
+                direction = Vec3(cam_forward * (held_keys['w'] - held_keys['s']) + cam_right * (held_keys['d'] - held_keys['a']))
                 if direction != Vec3(0,0,0):
                     direction = direction.normalized()
             
+            # Движение игрока в пространстве
             if direction != Vec3(0,0,0):
                 future_pos = self.position + (direction * current_speed * time.dt)
                 distance_from_center = math.sqrt(future_pos.x**2 + future_pos.z**2)
@@ -170,6 +189,13 @@ class Player(Entity):
                 else:
                     self.position = future_pos.normalized() * 49.9
                     self.dash_timer = 0
+                
+                target_rotation_y = math.degrees(math.atan2(direction.x, direction.z))
+                # Разворачиваем только визуальную модель self.visual, а не весь коллайдер!
+                self.visual.rotation_y = lerp(self.visual.rotation_y, target_rotation_y - self.rotation_y, time.dt * 12)
+            else:
+                # Когда стоим, плавно возвращаем модель лицом "от камеры" (в спину)
+                self.visual.rotation_y = lerp(self.visual.rotation_y, self.camera_pivot.rotation_y, time.dt * 8)
             self.y = 0.2
 
             for e in scene.entities:
